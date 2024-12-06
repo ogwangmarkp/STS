@@ -1,0 +1,107 @@
+<div class="row mb-2">
+  <div class="col-sm-12 col-md-3">Supply Reports</div>
+  <div class="col-sm-12 col-md-3">
+    <div class="form-group">
+      <label for="selected-supplier">Supplier{{selected_supplier}}</label>
+      <select id="selected-supplier"   onchange="filterReport()" class="w-100">
+        <option value="">Select</option>
+        {% for supplier in suppliers %}
+        {% if supplier.id == selected_supplier %}
+        <option selected="selected" value="{{supplier.id}}">{{supplier.name}}</option>
+        {% else %}
+        <option value="{{supplier.id}}">{{supplier.name}}</option>
+        {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="col-sm-12 col-md-3">
+    <div class="form-group">
+      <label for="start-date">Start Date</label>
+      <input type="text" id="start-date" class="form-control" value="{{start_date|date:"d-m-Y"}}"  onchange="filterReport()" placeholder="Start Date">
+    </div>
+  </div>
+  <div class="col-sm-12 col-md-3">
+    <div class="form-group">
+      <label for="end-date">End Date</label>
+      <input type="text" id="end-date" class="form-control" value="{{end_date|date:"d-m-Y"}}"   onchange="filterReport()" placeholder="End Date">
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-12 col-sm-12">
+    <div class="card card-primary card-outline">
+      <div class="card-header p-0 border-bottom-0">
+
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-12 col-sm-12">
+            <table id="supplier-lists" class="table table-bordered table-hover">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Supplier</th>
+                  {% for day_data in days_list %}
+                  <th> {{day_data.weekday}} {{day_data.date2}}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for r_data in report_data %}
+                <tr>
+                  <td>{{forloop.counter}}</td>
+                  <td>{{r_data.name}}</td>
+                  {% for day_data in r_data.supplier_data %}
+                  <td>{{day_data.quantity}}</td>
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+      <!-- /.card -->
+    </div>
+  </div>
+</div>
+<script>
+  $(function () {
+    $('#supplier-lists').DataTable({
+      "paging": true,
+      "lengthChange": false,
+      "searching": true,
+      "ordering": true,
+      "info": true,
+      "autoWidth": false,
+      "responsive": true,
+      "buttons": ["csv", "excel", "print"]
+    }).buttons().container().appendTo('#supplier-lists_wrapper .col-md-6:eq(0)');
+
+    $('#start-date').datepicker({
+    dateFormat: "dd-mm-yy"
+  });
+
+  $('#end-date').datepicker({
+    dateFormat: "dd-mm-yy"
+  });
+  });
+
+ 
+
+  function filterReport() {
+    $.ajax({
+      url: '/reports/weekly-reports/',
+      type: 'GET',
+      data: { "selected_supplier": $('#selected-supplier').val().trim(), "start_date": $('#start-date').val().trim(), 'end_date': $('#end-date').val().trim() },
+      success: function (data) {
+        $('.main-panel').html(data.html);
+      },
+      error: function (xhr, status, error) {
+        alert('Error loading data: ' + error);
+      }
+    });
+  }
+</script>

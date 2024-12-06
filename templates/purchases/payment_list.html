@@ -1,0 +1,317 @@
+<div class="row mb-2">
+  <div class="col-sm-6">
+    <h4 class="m-0">Payment List</h4>
+  </div>
+  <div class="col-sm-6">
+    <button id="new-payment-modal-btn" onclick="openNewPaymentModal()" type="button"
+      class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#new-payment-modal">
+      New Payment
+    </button>
+  </div>
+</div>
+<div class="row mb-2">
+  <div class="col-sm-12 col-md-4">
+    <div class="form-group">
+      <label for="selected-supplier">Supplier</label>
+      <select id="selected-supplier" onchange="filterReport()" class="w-100">
+        <option value="">Select</option>
+        {% for supplier in suppliers %}
+        {% if supplier.id == selected_supplier %}
+        <option selected="selected" value="{{supplier.id}}">{{supplier.name}}</option>
+        {% else %}
+        <option value="{{supplier.id}}">{{supplier.name}}</option>
+        {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="col-sm-12 col-md-4">
+    <div class="form-group">
+      <label for="start-date">Start Date</label>
+      <input type="text" id="filter-start-date" class="form-control" value="{{filter_start_date|date:" d-m-Y"}}"
+        onchange="filterReport()" placeholder="Start Date">
+    </div>
+  </div>
+  <div class="col-sm-12 col-md-4">
+    <div class="form-group">
+      <label for="end-date">End Date</label>
+      <input type="text" id="filter-end-date" class="form-control" value="{{filter_end_date|date:" d-m-Y"}}"
+        onchange="filterReport()" placeholder="End Date">
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="new-payment-modal">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">New Payment</h5>
+        <button type="button" onclick="resetNewPaymentModal()" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-sm-12 col-md-12">
+            <div class="form-group">
+              <label for="amount">Amount</label>
+              <input type="number" id="amount" name="amount" class='w-100'>
+            </div>
+            <div class="form-group">
+              <label for="record_date">Record Date</label>
+              <input type="text" id="record_date" name="record_date" class='w-100'>
+            </div>
+            <div class="form-group">
+              <label for="supplier">Supplier</label>
+              <select id="supplier" name="supplier" class="supplier w-100">
+                <option value="">Select</option>
+                {% for supplier in suppliers %}
+                <option value="{{supplier.id}}">{{supplier.name}}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-primary float-right" onclick="savePayment()">Save Payment
+          Details</button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+<div class="modal fade" id="edit-payment-dialog">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Payment</h5>
+        <button type="button" class="close" onclick="resetEditPaymentModal()" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-primary float-right" onclick="updatePayment()">Update Payment</button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+<div class="row">
+  <div class="col-12 col-sm-12">
+    <div class="card card-primary card-outline">
+      <div class="card-header p-0 border-bottom-0">
+
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-12 col-sm-12">
+            <table id="payment-lists" class="table table-bordered table-hover">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Supplier</th>
+                  <th>Amount Paid</th>
+                  <th>Total</th>
+                  <th>Expense</th>
+                  <th>Balance</th>
+                  <th>Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% load humanize %}
+                {% for purchase in purchases %}
+                <tr>
+                  <td>{{ forloop.counter}}</td>
+                  <td>{{ purchase.supplier.name}}</td>
+                  <td>{{ purchase.amount |intcomma }}</td>
+                  <td>{{ purchase.payment_at |intcomma }}</td>
+                  <td>{{ purchase.expense_at |intcomma }}</td>
+                  <td>{{ purchase.balance |intcomma }}</td>
+                  <td> {{ purchase.record_date|date:"d-m-Y" }}</td>
+                  <td style="text-align: center; max-width: 25px;">
+                    <div class="btn-group" style="align-content: center;">
+                      <button type="button" onclick="openEditPaymentModal('{{purchase.id}}')"
+                        class="btn btn-xs btn-primary">Edit Payment</button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+      <!-- /.card -->
+    </div>
+  </div>
+</div>
+<script>
+  $(function () {
+    //["copy", "csv", "excel", "pdf", "print", "colvis"]
+    $("#payment-lists").DataTable({
+      "responsive": true, "lengthChange": false, "autoWidth": false,
+      "buttons": ["csv", "excel","print"]
+    }).buttons().container().appendTo('#payment-lists_wrapper .col-md-6:eq(0)');
+     //Date picker
+     $('#record_date').datepicker({
+      maxDate: new Date(),
+      dateFormat:"dd-mm-yy"
+    });
+    $('#filter-start-date').datepicker({
+      dateFormat: "dd-mm-yy"
+    });
+
+    $('#filter-end-date').datepicker({
+      dateFormat: "dd-mm-yy"
+    });
+
+  });
+
+  function filterReport() {
+    $.ajax({
+      url: '/purchases/payment-list/',
+      type: 'GET',
+      data: { "selected_supplier": $('#selected-supplier').val().trim(), "filter_start_date": $('#filter-start-date').val().trim(), 'filter_end_date': $('#filter-end-date').val().trim() },
+      success: function (data) {
+        $('.main-panel').html(data.html);
+      },
+      error: function (xhr, status, error) {
+        alert('Error loading data: ' + error);
+      }
+    });
+  }
+
+  function validatePayment() {
+    var isValid = true;
+    $(".field-error").remove();
+
+    if ($("#amount").val().length < 1) {
+      errorMarker($("#amount"));
+      isValid = false;
+    }
+
+    if ($("#supplier").val().length < 1) {
+      errorMarker($("#supplier"));
+      isValid = false;
+    }
+
+    if ($("#record_date").val().length < 1) {
+      errorMarker($("#record_date"));
+      isValid = false;
+    }
+    
+    return isValid;
+  }
+
+  function validateEditPayment() {
+    var isValid = true;
+    $(".field-error").remove();
+
+    if ($("#edit-amount").val().length < 1) {
+      errorMarker($("#edit-amount"));
+      isValid = false;
+    }
+
+    if ($("#edit-supplier").val().length < 1) {
+      errorMarker($("#edit-supplier"));
+      isValid = false;
+    }
+
+    if ($("#edit-record_date").val().length < 1) {
+      errorMarker($("#edit-record_date"));
+      isValid = false;
+    }
+    return isValid;
+  }
+
+  function savePayment() {
+    if (validatePayment()) {
+      $.ajax({
+        url: '/purchases/save-payment/',
+        type: 'POST',
+        data: {
+          "amount": $("#amount").val(),
+          "supplier": $("#supplier").val(),
+          "record_date":$("#record_date").val().trim(),
+          'action': 'save'
+        },
+        success: function (data) {
+          $("#new-payment-modal-btn").click();
+          setTimeout(() => {
+            loadData('/purchases/payment-list/', 'GET', '');
+          }, 500);
+        },
+        error: function (xhr, status, error) {
+          alert('Error loading data: ' + error);
+        }
+      });
+    }
+  }
+
+  function openNewPaymentModal() {
+    $('.field-error').remove();
+    resetNewPaymentModal();
+  }
+
+  function resetNewPaymentModal() {
+    $(".field-error").remove();
+    $("#amount").val("");
+    $("#supplier").val("");
+    $("#record_date").val("")
+  }
+
+  function openEditPaymentModal(id) {
+    $('.field-error').remove();
+    $('.payment-panel').html('');
+    $('#edit-payment-dialog').modal('show');
+    $.ajax({
+      url: '/purchases/new-payment/',
+      type: 'GET',
+      data: { "action": 'edit', 'id': id },
+      success: function (data) {
+        $('#edit-payment-dialog').find('.modal-body').html(data.html);
+      },
+      error: function (xhr, status, error) {
+        alert('Error loading data: ' + error);
+      }
+    });
+  }
+
+  function resetEditPaymentModal() {
+    $(".field-error").remove();
+    $('#edit-payment-dialog').find('.modal-body').html('');
+  }
+
+  function updatePayment() {
+    if (validateEditPayment()) {
+      $.ajax({
+        url: '/purchases/save-payment/',
+        type: 'POST',
+        data: {
+          "id": $("#edit-payment-id").val(),
+          "amount": $("#edit-amount").val(),
+          "supplier": $("#edit-supplier").val(),
+          "record_date": $("#edit-record_date").val().trim(),
+          'action': 'edit'
+        },
+        success: function (data) {
+          $('#edit-payment-dialog').modal('hide');
+          setTimeout(() => {
+            loadData('/purchases/payment-list/', 'GET', '');
+          }, 500);
+        },
+        error: function (xhr, status, error) {
+          alert('Error loading data: ' + error);
+        }
+      });
+    }
+  }
+
+</script>

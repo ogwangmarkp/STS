@@ -1,0 +1,277 @@
+<div class="row mb-2">
+  <div class="col-sm-6">
+    <h4 class="m-0">Suppliers</h4>
+  </div>
+  <div class="col-sm-6">
+    <button id="new-supplier-modal-btn" onclick="openNewSupplierModal()" type="button"
+      class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#new-supplier-modal">
+      New Supplier
+    </button>
+  </div>
+</div>
+<div class="modal fade" id="new-supplier-modal">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">New Supplier</h5>
+        <button type="button" onclick="resetNewSupplierModal()" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-sm-12 col-md-12">
+            <label>Supplier Details</label>
+            <hr class="underliner"/>
+          </div>
+          <div class="col-sm-12 col-md-6">
+            <div class="form-group">
+              <label for="name">Supplier Name</label>
+              <input type="text" id="name" name="name" class='w-100'>
+            </div>
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="text" id="email" name="email" class='w-100'>
+            </div>
+            <div class="form-group">
+              <label for="phone-number">Telephone 1</label>
+              <input type="text" id="phone-number" name="phone-number" class='w-100'>
+            </div>
+          </div>
+          <div class="col-sm-12 col-md-6">
+            <div class="form-group">
+              <label for="phone-number">Telephone 2</label>
+              <input type="text" id="phone-number-2" name="phone-number-2" class='w-100'>
+            </div>
+            <div class="form-group">
+              <label for="address">Address</label>
+              <input type="text" id="address" name="address" class='w-100'>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-primary float-right" onclick="saveSupplier()">Save Supplier
+          Details</button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+<div class="modal fade" id="edit-supplier-dialog">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Supplier</h5>
+        <button type="button" class="close" onclick="resetEditSupplierModal()" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-primary float-right" onclick="updateSupplier()">Update Supplier</button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+<div class="row">
+  <div class="col-12 col-sm-12">
+    <div class="card card-primary card-outline">
+      <div class="card-header p-0 border-bottom-0">
+
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-12 col-sm-12">
+            <table id="supplier-lists" class="table table-bordered table-hover">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Telephone 1</th>
+                  <th>Telephone 2</th>
+                  <th>Email</th>
+                  <th>Address</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for supplier in suppliers %}
+                <tr>
+                  <td>{{ forloop.counter}}</td>
+                  <td>{{ supplier.name}}</td>
+                  <td>{{ supplier.phone_number}}</td>
+                  <td>{{ supplier.phone_number_2}}</td>
+                  <td>{{ supplier.email}}</td>
+                  <td>{{ supplier.address}}</td>
+                  <td style="text-align: center; max-width: 25px;">
+                    <div class="btn-group" style="align-content: center;">
+                      <button type="button" onclick="openEditSupplierModal('{{supplier.id}}')"
+                        class="btn btn-xs btn-primary">Edit Supplier</button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+      <!-- /.card -->
+    </div>
+  </div>
+</div>
+<script>
+  $(function () {
+    $('#supplier-lists').DataTable({
+      "paging": true,
+      "lengthChange": false,
+      "searching": false,
+      "ordering": true,
+      "info": true,
+      "autoWidth": false,
+      "responsive": true,
+      "buttons": ["csv", "excel","print"]
+    }).buttons().container().appendTo('#supplier-lists_wrapper .col-md-6:eq(0)');
+  });
+
+  function validateSupplier() {
+    var isValid = true;
+    $(".field-error").remove();
+    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+    if ($("#name").val().length < 1) {
+      errorMarker($("#name"));
+      isValid = false;
+    }
+
+
+    if ($("#email").val().length > 0 && !emailRegex.test($("#email").val())) {
+      $("#email").parent().find('.field-error').remove();
+      var fieldError = $('<label class="text-danger field-error">Invalid email</label>');
+      fieldError.insertAfter($("#email"));
+      isValid = false;
+    }
+    return isValid;
+  }
+
+  function validateEditSupplier() {
+    var isValid = true;
+    $(".field-error").remove();
+    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+    if ($("#edit-name").val().length < 1) {
+      errorMarker($("#edit-name"));
+      isValid = false;
+    }
+
+
+    if ($("#edit-email").val().length > 0 && !emailRegex.test($("#edit-email").val())) {
+      $("#edit-email").parent().find('.field-error').remove();
+      var fieldError = $('<label class="text-danger field-error">Invalid email</label>');
+      fieldError.insertAfter($("#edit-email"));
+      isValid = false;
+    }
+    return isValid;
+  }
+
+  function saveSupplier() {
+    if (validateSupplier()) {
+      $.ajax({
+        url: '/suppliers/save-supplier/',
+        type: 'POST',
+        data: {
+          "email": $("#email").val(),
+          "name": $("#name").val(),
+          "address": $("#address").val(),
+          "phone_number": $("#phone-number").val(),
+          "phone_number_2": $("#phone-number-2").val(),
+          'action': 'save'
+        },
+        success: function (data) {
+          $("#new-supplier-modal-btn").click();
+          setTimeout(() => {
+            loadData('/suppliers/supplier-list/', 'GET', '');
+          }, 500);
+        },
+        error: function (xhr, status, error) {
+          alert('Error loading data: ' + error);
+        }
+      });
+    }
+  }
+
+  function openNewSupplierModal() {
+    $('.field-error').remove();
+    resetNewSupplierModal();
+  }
+
+  function resetNewSupplierModal() {
+    $(".field-error").remove();
+    $("#email").val("");
+    $("#name").val("");
+    $("#address").val("");
+    $("#phone-number").val("");
+    $("#phone-number-2").val("");
+  }
+
+
+  function openEditSupplierModal(id) {
+    $('.field-error').remove();
+    $('.supplier-panel').html('');
+    $('#edit-supplier-dialog').modal('show');
+    $.ajax({
+      url: '/suppliers/new-supplier/',
+      type: 'GET',
+      data: {"action": 'edit','id':id},
+      success: function (data) {
+        $('#edit-supplier-dialog').find('.modal-body').html(data.html);
+      },
+      error: function (xhr, status, error) {
+        alert('Error loading data: ' + error);
+      }
+    });
+  }
+
+  function resetEditSupplierModal() {
+    $(".field-error").remove();
+    $('#edit-supplier-dialog').find('.modal-body').html('');
+  }
+
+  function updateSupplier() {
+    if (validateEditSupplier()) {
+      $.ajax({
+        url: '/suppliers/save-supplier/',
+        type: 'POST',
+        data: {
+          "id":$("#edit-supplier-id").val(),
+          "email": $("#edit-email").val(),
+          "phone_number": $("#edit-phone-number").val(),
+          "name": $("#edit-name").val(),
+          "address": $("#edit-address").val(),
+          "phone_number": $("#edit-phone-number").val(),
+          "phone_number_2": $("#edit-phone-number-2").val(),
+          'action': 'edit'
+        },
+        success: function (data) {
+          $('#edit-supplier-dialog').modal('hide');
+          setTimeout(() => {
+            loadData('/suppliers/supplier-list/', 'GET', '');
+          }, 500);
+        },
+        error: function (xhr, status, error) {
+          alert('Error loading data: ' + error);
+        }
+      });
+    }
+  }
+
+</script>

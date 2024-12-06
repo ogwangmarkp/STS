@@ -1,0 +1,346 @@
+<div class="row mb-2">
+  <div class="col-sm-6">
+    <h4 class="m-0">Sales List</h4>
+  </div>
+  <div class="col-sm-6">
+    <button id="new-sale-modal-btn" onclick="openNewSaleModal()" type="button"
+      class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#new-sale-modal">
+      New Sale
+    </button>
+  </div>
+</div>
+<div class="row mb-2">
+  <div class="col-sm-12 col-md-4">
+    <div class="form-group">
+      <label for="selected-customer">Customer</label>
+      <select id="selected-customer" onchange="filterReport()" class="w-100">
+        <option value="">Select</option>
+        {% for customer in customers %}
+        {% if customer.id == selected_customer %}
+        <option selected="selected" value="{{customer.id}}">{{customer.name}}</option>
+        {% else %}
+        <option value="{{customer.id}}">{{customer.name}}</option>
+        {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="col-sm-12 col-md-4">
+    <div class="form-group">
+      <label for="start-date">Start Date</label>
+      <input type="text" id="filter-start-date" class="form-control" value="{{filter_start_date|date:" d-m-Y"}}"
+        onchange="filterReport()" placeholder="Start Date">
+    </div>
+  </div>
+  <div class="col-sm-12 col-md-4">
+    <div class="form-group">
+      <label for="end-date">End Date</label>
+      <input type="text" id="filter-end-date" class="form-control" value="{{filter_end_date|date:" d-m-Y"}}"
+        onchange="filterReport()" placeholder="End Date">
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="new-sale-modal">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">New Sale</h5>
+        <button type="button" onclick="resetNewSaleModal()" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-sm-12 col-md-6">
+            <div class="form-group">
+              <label for="quantity">Quantity</label>
+              <input type="number" id="quantity" name="quantity" class='w-100'>
+            </div>
+            <div class="form-group">
+              <label for="price">Price</label>
+              <input type="text" id="price" name="price" class='w-100'>
+            </div>
+            <div class="form-group">
+              <label for="total">Total</label>
+              <input disabled="disabled" type="text" id="total" name="total" class='w-100'>
+            </div>
+          </div>
+          <div class="col-sm-12 col-md-6">
+            <div class="form-group">
+              <label for="record_date">Record Date</label>
+              <input type="text" id="record_date" name="record_date" class='w-100'>
+            </div>
+            <div class="form-group">
+              <label for="customer">Customer</label>
+              <select id="customer" name="customer" class="customer w-100">
+                <option value="">Select</option>
+                {% for customer in customers %}
+                <option value="{{customer.id}}">{{customer.name}}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-primary float-right" onclick="saveSale()">Save Sale
+          Details</button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+<div class="modal fade" id="edit-sale-dialog">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Sale</h5>
+        <button type="button" class="close" onclick="resetEditSaleModal()" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-primary float-right" onclick="updateSale()">Update sale</button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+<div class="row">
+  <div class="col-12 col-sm-12">
+    <div class="card card-primary card-outline">
+      <div class="card-header p-0 border-bottom-0">
+
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-12 col-sm-12">
+            <table id="sale-lists" class="table table-bordered table-hover">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>customer</th>
+                  <th>Quantity</th>
+                  <th>Price</th>
+                  <th>Total Deliveries</th>
+                  <th>Amount Paid</th>
+                  <th>Balance</th>
+                  <th>Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% load humanize %}
+                {% for sale in sales_list %}
+                <tr>
+                  <td>{{ forloop.counter}}</td>
+                  <td>{{ sale.customer.name}}</td>
+                  <td>{{ sale.quantity}}</td>
+                  <td>{{ sale.price |intcomma }}</td>
+                  <td>{{ sale.expense_at |intcomma }}</td>
+                  <td>{{ sale.payment_at |intcomma }}</td>
+                  <td>{{ sale.balance |intcomma }}</td>
+                  <td> {{ sale.record_date|date:"d-m-Y" }}</td>
+                  <td style="text-align: center; max-width: 25px;">
+                    <div class="btn-group" style="align-content: center;">
+                      <button type="button" onclick="openEditSaleModal('{{sale.id}}')"
+                        class="btn btn-xs btn-primary">Edit sale</button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+      <!-- /.card -->
+    </div>
+  </div>
+</div>
+<script>
+  $(function () {
+    $('#sale-lists').DataTable({
+      "paging": true,
+      "lengthChange": false,
+      "searching": false,
+      "ordering": true,
+      "info": true,
+      "autoWidth": false,
+      "responsive": true,
+      "buttons": ["csv", "excel","print"]
+    }).buttons().container().appendTo('#sale-lists_wrapper .col-md-6:eq(0)');
+     //Date picker
+     $('#record_date').datepicker({
+      maxDate: new Date(),
+      dateFormat:"dd-mm-yy"
+    });
+    $('#filter-start-date').datepicker({
+      dateFormat: "dd-mm-yy"
+    });
+
+    $('#filter-end-date').datepicker({
+      dateFormat: "dd-mm-yy"
+    });
+  });
+
+  function filterReport() {
+    $.ajax({
+      url: '/sales/sales-list/',
+      type: 'GET',
+      data: { "selected_customer": $('#selected-customer').val().trim(), "filter_start_date": $('#filter-start-date').val().trim(), 'filter_end_date': $('#filter-end-date').val().trim() },
+      success: function (data) {
+        $('.main-panel').html(data.html);
+      },
+      error: function (xhr, status, error) {
+        alert('Error loading data: ' + error);
+      }
+    });
+  }
+
+  function validateSale() {
+    var isValid = true;
+    $(".field-error").remove();
+
+    if ($("#quantity").val().length < 1) {
+      errorMarker($("#quantity"));
+      isValid = false;
+    }
+
+    if ($("#price").val().length < 1) {
+      errorMarker($("#price"));
+      isValid = false;
+    }
+
+    if ($("#customer").val().length < 1) {
+      errorMarker($("#customer"));
+      isValid = false;
+    }
+
+    if ($("#record_date").val().length < 1) {
+      errorMarker($("#record_date"));
+      isValid = false;
+    }
+    
+    return isValid;
+  }
+
+  function validateEditStock() {
+    var isValid = true;
+    $(".field-error").remove();
+
+    if ($("#edit-quantity").val().length < 1) {
+      errorMarker($("#edit-quantity"));
+      isValid = false;
+    }
+
+    if ($("#edit-price").val().length < 1) {
+      errorMarker($("#edit-price"));
+      isValid = false;
+    }
+
+    if ($("#edit-customer").val().length < 1) {
+      errorMarker($("#edit-customer"));
+      isValid = false;
+    }
+
+    if ($("#edit-record_date").val().length < 1) {
+      errorMarker($("#edit-record_date"));
+      isValid = false;
+    }
+    return isValid;
+  }
+
+  function saveSale() {
+    if (validateSale()) {
+      $.ajax({
+        url: '/sales/save-sale/',
+        type: 'POST',
+        data: {
+          "quantity": $("#quantity").val(),
+          "price": $("#price").val(),
+          "customer": $("#customer").val(),
+          "record_date":$("#record_date").val().trim(),
+          'action': 'save'
+        },
+        success: function (data) {
+          $("#new-sale-modal-btn").click();
+          setTimeout(() => {
+            loadData('/sales/sales-list/', 'GET', '');
+          }, 500);
+        },
+        error: function (xhr, status, error) {
+          alert('Error loading data: ' + error);
+        }
+      });
+    }
+  }
+
+  function openNewSaleModal() {
+    $('.field-error').remove();
+    resetNewSaleModal();
+  }
+
+  function resetNewSaleModal() {
+    $(".field-error").remove();
+    $("#quantity").val("");
+    $("#price").val("");
+    $("#customer").val("");
+    $("#record_date").val("")
+  }
+
+  function openEditSaleModal(id) {
+    $('.field-error').remove();
+    $('.sale-panel').html('');
+    $('#edit-sale-dialog').modal('show');
+    $.ajax({
+      url: '/sales/new-sale/',
+      type: 'GET',
+      data: { "action": 'edit', 'id': id },
+      success: function (data) {
+        $('#edit-sale-dialog').find('.modal-body').html(data.html);
+      },
+      error: function (xhr, status, error) {
+        alert('Error loading data: ' + error);
+      }
+    });
+  }
+
+  function resetEditSaleModal() {
+    $(".field-error").remove();
+    $('#edit-sale-dialog').find('.modal-body').html('');
+  }
+
+  function updateSale() {
+    if (validateEditStock()) {
+      $.ajax({
+        url: '/sales/save-sale/',
+        type: 'POST',
+        data: {
+          "id": $("#edit-sale-id").val(),
+          "quantity": $("#edit-quantity").val(),
+          "price": $("#edit-price").val(),
+          "customer": $("#edit-customer").val(),
+          "record_date": $("#edit-record_date").val().trim(),
+          'action': 'edit'
+        },
+        success: function (data) {
+          $('#edit-sale-dialog').modal('hide');
+          setTimeout(() => {
+            loadData('/sales/sales-list/', 'GET', '');
+          }, 500);
+        },
+        error: function (xhr, status, error) {
+          alert('Error loading data: ' + error);
+        }
+      });
+    }
+  }
+
+</script>

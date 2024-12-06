@@ -1,0 +1,143 @@
+<div class="row mb-2">
+  <div class="col-sm-6">
+    <h4 class="m-0">Users</h4>
+  </div>
+  <div class="col-sm-6">
+    <button id="new-user-modal-btn" onclick="openNewUserModal()" type="button"
+      class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#new-user-modal">
+      New User
+    </button>
+  </div>
+</div>
+<div class="modal fade" id="new-user-modal">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">New User</h5>
+        <button type="button" onclick="resetNewUserModal()" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="row mb-2">
+          <div class="col-sm-12 col-md-6">
+            <div class="form-group">
+              <label for="first-name">First Name</label>
+              <input type="text" id="first-name" name="first-name" class='w-100'>
+            </div>
+            <div class="form-group">
+              <label for="last-name">Last Name</label>
+              <input type="text" id="last-name" name="last-name" class='w-100'>
+            </div>
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="text" id="email" name="email" class='w-100'>
+            </div>
+            <div class="form-group">
+              <label for="phone-number">Telephone</label>
+              <input type="text" id="phone-number" name="phone-number" class='w-100'>
+            </div>
+          </div>
+          <div class="col-sm-12 col-md-6">
+            <div class="form-group">
+              <label for="last-name">User Name</label>
+              <input type="text" id="username" name="username" class='w-100'>
+            </div>
+            <div class="form-group">
+              <label for="last-name">Password</label>
+              <input type="password" id="password" name="password" class='w-100'>
+            </div>
+            <div class="form-group">
+              <label for="last-name">Retype Password</label>
+              <input type="password" id="retype-password" name="retype-password" class='w-100'>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-primary float-right" onclick="saveUser()">Save User Details</button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+<div class="modal fade" id="edit-user-dialog">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit User</h5>
+        <button type="button" class="close" onclick="resetEditUserModal()" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-primary float-right" onclick="updateUser()">Update User</button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+<div class="row">
+  <div class="col-12 col-sm-12">
+    <div class="card card-primary card-outline">
+      <div class="card-header p-0 border-bottom-0">
+
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-12 col-sm-12">
+            <table id="user-role-lists" class="table table-bordered table-hover">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>User Fullname</th>
+                  <th>username</th>
+                  <th>Telephone</th>
+                  <th>Email</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for user in users %}
+                <tr data-href="{{file.url_path}}">
+                  <td>{{ forloop.counter}}</td>
+                  <td>{{ user.first_name}} {{ user.last_name}}</td>
+                  <td>{{ user.username}}</td>
+                  <td>{{ user.phone_number}}</td>
+                  <td>{{ user.email}}</td>
+                  <td style="text-align: center; max-width: 25px;">
+                    <div class="btn-group" style="align-content: center;">
+                      <button type="button" onclick="openEditUserModal('{{user.id}}')"
+                        class="btn btn-xs btn-primary">Edit User</button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+      <!-- /.card -->
+    </div>
+  </div>
+</div>
+<script>
+  $(function () {
+    $('#user-role-lists').DataTable({
+      "paging": true,
+      "lengthChange": false,
+      "searching": false,
+      "ordering": true,
+      "info": true,
+      "autoWidth": false,
+      "responsive": true,
+    });
+  });
+</script>
