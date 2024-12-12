@@ -20,6 +20,7 @@ from users import views as user_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', user_views.index, name='index'),
+    path('clear-db', user_views.clear_db, name='clear-db'),
     path('users/', include('users.urls')),
     path('suppliers/', include('suppliers.urls')),
     path('customers/', include('customers.urls')),

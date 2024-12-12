@@ -11,9 +11,23 @@ from django.contrib.auth import logout, authenticate, login
 import json
 # Create your views here.
 from django.contrib import messages 
+from purchases.models import *
+from sales.models import *
 
 def index(request):
     return redirect('/users/login/')
+
+
+def clear_db(request):
+    Sale.objects.all().delete()
+    StockDelivered.objects.all().delete()
+    Stock.objects.all().delete()
+    Purchase.objects.all().delete()
+
+    data = {
+        'status': 'success'
+    }
+    return JsonResponse(data)
 
 def login_user(request): 
     
