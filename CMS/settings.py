@@ -32,9 +32,9 @@ DEBUG = True
 STATIC_URL = "static/"
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-FILE_UPLOAD_DIR = os.path.join(BASE_DIR, 'uploaded-files')
+#FILE_UPLOAD_DIR = os.path.join(BASE_DIR, 'uploaded-files')
 
-STATICFILES_DIRS = [BASE_DIR / "static"]
+#STATICFILES_DIRS = [BASE_DIR / "static"]
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '51.20.109.248']
 
