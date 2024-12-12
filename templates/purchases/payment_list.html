@@ -116,9 +116,10 @@
                   <th>#</th>
                   <th>Supplier</th>
                   <th>Amount Paid</th>
-                  <th>Total</th>
-                  <th>Expense</th>
-                  <th>Balance</th>
+                  <th>Total Payments</th>
+                  <th>Expense / Supply</th>
+                  <th>Bal Remaining</th>
+                  <th>Stock Bal(Kgs)</th>
                   <th>Date</th>
                   <th>Action</th>
                 </tr>
@@ -133,6 +134,7 @@
                   <td>{{ purchase.payment_at |intcomma }}</td>
                   <td>{{ purchase.expense_at |intcomma }}</td>
                   <td>{{ purchase.balance |intcomma }}</td>
+                  <td>{{ purchase.balance_qty |intcomma }}</td>
                   <td> {{ purchase.record_date|date:"d-m-Y" }}</td>
                   <td style="text-align: center; max-width: 25px;">
                     <div class="btn-group" style="align-content: center;">

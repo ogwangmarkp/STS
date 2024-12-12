@@ -22,8 +22,9 @@ db.sqlite3
 
 #scripts
 restart_app.sh
-
-
+**/__pycache__
+**/migrations
+**/migrations/
 # Other Files
 .DS_Store
 .DS_Store
@@ -35,4 +36,5 @@ app.log
 
 .DS_Store
 .env
-
+venv
+venv/*

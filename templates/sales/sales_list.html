@@ -124,12 +124,13 @@
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>customer</th>
+                  <th>Customer</th>
                   <th>Quantity</th>
                   <th>Price</th>
                   <th>Total Deliveries</th>
                   <th>Amount Paid</th>
-                  <th>Balance</th>
+                  <th>Bal Remaining</th>
+                  <th>Stock Bal(Kgs)</th>
                   <th>Date</th>
                   <th>Action</th>
                 </tr>
@@ -145,6 +146,7 @@
                   <td>{{ sale.expense_at |intcomma }}</td>
                   <td>{{ sale.payment_at |intcomma }}</td>
                   <td>{{ sale.balance |intcomma }}</td>
+                  <td>{{ sale.balance_qty |intcomma }}</td>
                   <td> {{ sale.record_date|date:"d-m-Y" }}</td>
                   <td style="text-align: center; max-width: 25px;">
                     <div class="btn-group" style="align-content: center;">

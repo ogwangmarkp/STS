@@ -129,7 +129,8 @@
                   <th>Price</th>
                   <th>Expense/Supply</th>
                   <th>Amount Paid</th>
-                  <th>Balance</th>
+                  <th>Bal Remaining</th>
+                  <th>Stock Bal(Kgs)</th>
                   <th>Date</th>
                   <th>Action</th>
                 </tr>
@@ -145,6 +146,7 @@
                   <td>{{ stock.expense_at |intcomma }}</td>
                   <td>{{ stock.payment_at |intcomma }}</td>
                   <td>{{ stock.balance |intcomma }}</td>
+                  <td>{{ stock.balance_qty |intcomma }}</td>
                   <td> {{ stock.record_date|date:"d-m-Y" }}</td>
                   <td style="text-align: center; max-width: 25px;">
                     <div class="btn-group" style="align-content: center;">

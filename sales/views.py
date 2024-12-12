@@ -7,8 +7,9 @@ from django.template.loader import render_to_string
 from .models import *
 from customers.models import Customer
 from django.db.models import F
-from django.db.models import Subquery, OuterRef, Sum
-from django.db.models.functions import Coalesce
+from django.db.models import Subquery, OuterRef, Sum,  Case, When, Value, FloatField
+from django.db.models.functions import Coalesce,Round
+
 import datetime
 from datetime import timedelta
 # Create your views here.
@@ -44,15 +45,28 @@ def sale_list(request):
     payment_at_subquery = Sale.objects.filter(
         customer=OuterRef('customer'),  
         record_date__gte=filter_start_date,
-        record_date__lte=filter_end_date   
+        record_date__lte=OuterRef('record_date'),  
     ).values('customer').annotate(
         total=Sum(Coalesce('amount',0.0))  
     ).values('total')  
+    
+    latest_price_subquery = StockDelivered.objects.filter(
+         customer=OuterRef('customer'),
+         record_date__lte=OuterRef('record_date'),
+    ).order_by('-record_date').values('price')[:1]
+    
+    qty_at_subquery = StockDelivered.objects.filter(
+        customer=OuterRef('customer'),
+        record_date__gte=filter_start_date,
+        record_date__lte=OuterRef('record_date'),
+    ).values('customer').annotate(
+       total=Sum(Coalesce(F('quantity'),0.0))
+    ).values('total') 
 
     expense_at_subquery = StockDelivered.objects.filter(
         customer=OuterRef('customer'),
         record_date__gte=filter_start_date,
-        record_date__lte=filter_end_date 
+        record_date__lte=OuterRef('record_date'),
     ).values('customer').annotate(
        total=Sum(Coalesce(F('quantity'),0.0) * Coalesce(F('price'),0.0),
     )
@@ -60,9 +74,16 @@ def sale_list(request):
 
     sales_list = StockDelivered.objects.filter(**q_filter).annotate(
         payment_at = Coalesce(Subquery(payment_at_subquery),0.0),
-        expense_at = Coalesce(Subquery(expense_at_subquery),0.0),     
+        expense_at = Coalesce(Subquery(expense_at_subquery),0.0),  
+        qty_at = Coalesce(Subquery(qty_at_subquery),0.0),   
+        latest_price = Coalesce(Subquery(latest_price_subquery),1.0),    
     ).order_by('-record_date').annotate(
-        balance=F('payment_at') - F('expense_at')
+        balance= F('expense_at')-F('payment_at'),
+        balance_qty =Round(( F('expense_at') - F('payment_at'))/Case(
+        When(latest_price=0, then=Value(1)),
+        default='latest_price',
+        output_field=FloatField()
+    ),2)
     )
     
     template = render_to_string(
@@ -118,7 +139,7 @@ def save_sale(request):
                 sale.quantity = quantity
                 sale.price = price
                 sale.customer = customer
-                sale.record_date = datetime.strptime(record_date, '%d-%m-%Y')
+                sale.record_date = datetime.datetime.strptime(record_date, '%d-%m-%Y')
                 sale.save()
 
             return JsonResponse({'status': 'success'})
@@ -128,7 +149,7 @@ def save_sale(request):
                 "quantity": quantity,
                 "price": price,
                 "customer":customer,
-                "record_date":datetime.strptime(record_date, '%d-%m-%Y'),
+                "record_date":datetime.datetime.strptime(record_date, '%d-%m-%Y'),
                 "added_by": User.objects.get(pk=1)
             })
             return JsonResponse({'status': 'success'})
@@ -163,10 +184,23 @@ def payment_list(request):
     q_filter['record_date__date__gte'] = filter_start_date
     q_filter['record_date__date__lte'] = filter_end_date
   
+    latest_price_subquery = StockDelivered.objects.filter(
+         customer=OuterRef('customer'),
+         record_date__lte=OuterRef('record_date'),
+    ).order_by('-record_date').values('price')[:1]
+    
+    qty_at_subquery = StockDelivered.objects.filter(
+        customer=OuterRef('customer'),
+        record_date__gte=filter_start_date,
+        record_date__lte=OuterRef('record_date'),
+    ).values('customer').annotate(
+       total=Sum(Coalesce(F('quantity'),0.0))
+    ).values('total') 
+
     payment_at_subquery = Sale.objects.filter(
         customer=OuterRef('customer'),  
         record_date__gte=filter_start_date,
-        record_date__lte=filter_end_date 
+        record_date__lte=OuterRef('record_date'), 
     ).values('customer').annotate(
         total=Sum(Coalesce('amount',0.0))  
     ).values('total')  
@@ -174,16 +208,23 @@ def payment_list(request):
     expense_at_subquery = StockDelivered.objects.filter(
         customer=OuterRef('customer'),
         record_date__gte=filter_start_date,
-        record_date__lte=filter_end_date 
+        record_date__lte=OuterRef('record_date'),
     ).values('customer').annotate(
        total=Sum(Coalesce(F('quantity'),0.0) * Coalesce(F('price'),0.0),
     )
     ).values('total') 
     payment_list = Sale.objects.filter(**q_filter).annotate(
         payment_at = Coalesce(Subquery(payment_at_subquery),0.0),
-        expense_at = Coalesce(Subquery(expense_at_subquery),0.0),      
+        expense_at = Coalesce(Subquery(expense_at_subquery),0.0), 
+        qty_at = Coalesce(Subquery(qty_at_subquery),0.0),   
+        latest_price = Coalesce(Subquery(latest_price_subquery),1.0),     
     ).order_by("-record_date").annotate(
-        balance=F('payment_at') - F('expense_at')
+        balance= F('expense_at')-F('payment_at'),
+        balance_qty =Round(( F('expense_at') - F('payment_at'))/Case(
+        When(latest_price=0, then=Value(1)),
+        default='latest_price',
+        output_field=FloatField()
+    ),2)
     )
  
     template = render_to_string(
@@ -238,7 +279,7 @@ def save_payment(request):
             if sale:
                 sale.amount = amount
                 sale.customer = customer
-                sale.record_date = datetime.strptime(record_date, '%d-%m-%Y')
+                sale.record_date = datetime.datetime.strptime(record_date, '%d-%m-%Y')
                 sale.save()
 
             return JsonResponse({'status': 'success'})
@@ -247,7 +288,7 @@ def save_payment(request):
             Sale.objects.create(**{
                 "amount": amount,
                 "customer":customer,
-                "record_date":datetime.strptime(record_date, '%d-%m-%Y'),
+                "record_date":datetime.datetime.strptime(record_date, '%d-%m-%Y'),
                 "added_by": User.objects.get(pk=1)
             })
             return JsonResponse({'status': 'success'})
