@@ -38,3 +38,6 @@ app.log
 .env
 venv
 venv/*
+
+stsvenv
+stsvenv/*
