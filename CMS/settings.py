@@ -36,7 +36,7 @@ FILE_UPLOAD_DIR = os.path.join(BASE_DIR, 'uploaded-files')
 
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*','stsapp.tracesms.co']
 
 
 # Application definition
