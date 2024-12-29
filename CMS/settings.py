@@ -36,7 +36,7 @@ STATIC_URL = "static/"
 
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '51.20.109.248']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '13.53.40.163']
 
 
 # Application definition
@@ -96,7 +96,7 @@ WSGI_APPLICATION = 'CMS.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'sts',
+        'NAME': 'meat',
         'USER': 'postgres',
         'PASSWORD':'password',
         'HOST': '127.0.0.1',
