@@ -30,11 +30,11 @@ SECRET_KEY = 'django-insecure-nbcr8=_-9uz)f7h%lbzfs=c$l0cr#(u6(zdtp4p1sd*fx106o7
 DEBUG = True
 
 STATIC_URL = "static/"
-#STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 #FILE_UPLOAD_DIR = os.path.join(BASE_DIR, 'uploaded-files')
 
-STATICFILES_DIRS = [BASE_DIR / "static"]
+#STATICFILES_DIRS = [BASE_DIR / "static"]
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '13.53.40.163','stsapp.tracesms.co']
 
