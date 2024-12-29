@@ -7,15 +7,16 @@ from django.conf import settings
 from users.models import User
 from django.template.loader import render_to_string
 from .models import Supplier
-
+from locations.models import Location
 # Create your views here.
 
 @csrf_exempt
 @login_required
 def supplier_list(request):
-    suppliers = Supplier.objects.all()
+    suppliers = Supplier.objects.all().order_by('supplier_no')
+    locations = Location.objects.all()
     template = render_to_string(
-        'suppliers/supplier_list.html', {'suppliers': suppliers})
+        'suppliers/supplier_list.html', {'suppliers': suppliers, 'locations':locations})
     data = {
         'html': template,
         'status': 'success'
@@ -33,9 +34,9 @@ def supplier_form(request):
 
         if action == 'edit':
             supplier = Supplier.objects.get(pk=id)
-
+            locations = Location.objects.all()
             template = render_to_string(
-                'suppliers/edit_supplier.html', {'supplier': supplier})
+                'suppliers/edit_supplier.html', {'supplier': supplier,'locations':locations})
             
             data = {
                 'html': template,
@@ -52,13 +53,20 @@ def save_supplier(request):
         id = request.POST.get('id', None)
         email = request.POST.get('email')
         name = request.POST.get('name')
-        address = request.POST.get('address')
         phone_number = request.POST.get('phone_number')
         phone_number_2 = request.POST.get('phone_number_2')
+        address = Location.objects.filter(id=request.POST.get('address')).first()
 
         if action == 'edit':
             supplier = Supplier.objects.filter(id=id).first()
+            
             if supplier:
+                supplier_no = supplier.supplier_no
+                
+                if not supplier_no:
+                    supplier_no = f'SN{supplier.id}'
+                    supplier.supplier_no = supplier_no
+
                 supplier.email = email
                 supplier.name = name
                 supplier.address = address
@@ -69,7 +77,15 @@ def save_supplier(request):
             return JsonResponse({'status': 'success'})
 
         if action == 'save':
+            # generate supplier No:
+            supplier_no = 'SN1'
+            last_supplier = Supplier.objects.all().order_by('id').last()
+            
+            if last_supplier:
+                supplier_no = f'SN{last_supplier.id + 1}'
+
             Supplier.objects.create(**{
+                "supplier_no":supplier_no,
                 "email": email,
                 "name": name,
                 "address": address,

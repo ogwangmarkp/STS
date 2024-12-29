@@ -96,6 +96,17 @@
 		.login-dark form .btn-primary:active {
 			transform: translateY(1px);
 		}
+
+		@media (max-width: 425px) {
+			.login-dark form {
+				transform: translate(-59%, -40%);
+				top: 40%;
+			}
+
+			.login-dark .illustration {
+				font-size: 60px;
+			}
+		}
 	</style>
 </head>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -106,7 +117,8 @@
 		{% csrf_token %}
 		<h1 class="text-center">Login</h1>
 		<div class="illustration"><i class="icon ion-ios-locked-outline"></i></div>
-		<div class="form-group"><input class="form-control mb-2" type="text" name="email" placeholder="Username / Email">
+		<div class="form-group"><input class="form-control mb-2" type="text" name="email"
+				placeholder="Username / Email">
 		</div>
 		<div class="form-group"><input class="form-control mb-2" type="password" name="password" placeholder="Password">
 		</div>

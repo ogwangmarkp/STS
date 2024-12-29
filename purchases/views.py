@@ -11,6 +11,7 @@ from purchases.models import Purchase
 from suppliers.models import Supplier
 from django.db.models import F
 import datetime
+import json
 from datetime import timedelta
 from django.db.models import Subquery, OuterRef, Sum,  Case, When, Value, FloatField
 from django.db.models.functions import Coalesce,Round
@@ -129,6 +130,7 @@ def save_stock(request):
         id = request.POST.get('id', None)
         quantity = request.POST.get('quantity')
         price = request.POST.get('price')
+        amount_paid = request.POST.get('amount_paid',None)
         supplier_id = request.POST.get('supplier')
         record_date = request.POST.get('record_date')
         supplier = Supplier.objects.filter(id=supplier_id).first()
@@ -151,8 +153,18 @@ def save_stock(request):
                 "price": price,
                 "supplier":supplier,
                 "record_date":datetime.datetime.strptime(record_date, '%d-%m-%Y'),
-                "added_by": User.objects.get(pk=1)
+                "added_by": request.user
             })
+
+            # Capture payments
+            if amount_paid  and float(amount_paid) > 0:
+                Purchase.objects.create(**{
+                    "amount": float(amount_paid),
+                    "supplier":supplier,
+                    "record_date":datetime.datetime.strptime(record_date, '%d-%m-%Y'),
+                    "added_by": request.user
+                })
+
             return JsonResponse({'status': 'success'})
 
         return JsonResponse({'status': 'failed'})
@@ -276,7 +288,6 @@ def save_payment(request):
         
         if action == 'edit':
             purchase = Purchase.objects.filter(id=id).first()
-            
             if purchase:
                 purchase.amount = amount
                 purchase.supplier = supplier
@@ -290,8 +301,68 @@ def save_payment(request):
                 "amount": amount,
                 "supplier":supplier,
                 "record_date":datetime.datetime.strptime(record_date, '%d-%m-%Y'),
-                "added_by": User.objects.get(pk=1)
+                "added_by": request.user
             })
             return JsonResponse({'status': 'success'})
 
         return JsonResponse({'status': 'failed'})
+
+
+@csrf_exempt
+@login_required
+def bulk_stocking(request):
+    if request.method == 'GET':
+        template = request.GET.get('template')
+        
+        Json_data = [['Supplier No','Supplier Name','Quantity','Price','Record Date','Amount Paid']]
+        
+        if template == 'payment':
+          Json_data = [['Supplier No','Supplier Name','Record Date','Amount Paid']]
+          
+        suppliers = Supplier.objects.all()
+        if suppliers:
+            for supplier in suppliers:
+                if template == 'payment':
+                    Json_data.append([supplier.supplier_no,supplier.name,"",""])
+                else:
+                    Json_data.append([supplier.supplier_no,supplier.name,"","","",""])
+                    
+        
+        data = {
+            'Json_data': Json_data,
+            'status': 'success'
+        }
+        # suppliers.delete()
+        return JsonResponse(data)
+    
+    if request.method == 'POST':
+        stock_purchases = request.POST.get('stock_purchases')
+        stock_purchases = json.loads(stock_purchases)
+       
+        if stock_purchases:
+            for stock_purchase in stock_purchases:
+                supplier_no = stock_purchase.get('Supplier No',None)
+                quantity = stock_purchase.get('Quantity',None)
+                price = stock_purchase.get('Price',None)
+                record_date = stock_purchase.get('Record Date',None)
+                amount_paid = stock_purchase.get('Amount Paid',None)
+               
+                if supplier_no and quantity and price and record_date:
+                    Stock.objects.create(**{
+                        "quantity": quantity,
+                        "price": price,
+                        "supplier":Supplier.objects.filter(supplier_no=supplier_no).first(),
+                        "record_date":datetime.datetime.strptime(record_date, '%Y-%m-%d'),
+                        "added_by": request.user
+                    })
+                
+                if supplier_no and record_date and amount_paid and float(amount_paid) > 0:
+                    Purchase.objects.create(**{
+                        "amount": amount_paid,
+                        "supplier":Supplier.objects.filter(supplier_no=supplier_no).first(),
+                        "record_date":datetime.datetime.strptime(record_date, '%Y-%m-%d'),
+                        "added_by": request.user
+                    })
+            return JsonResponse({'status': 'success'})
+    
+    return JsonResponse({'status': 'failed'})

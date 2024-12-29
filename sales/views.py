@@ -9,7 +9,7 @@ from customers.models import Customer
 from django.db.models import F
 from django.db.models import Subquery, OuterRef, Sum,  Case, When, Value, FloatField
 from django.db.models.functions import Coalesce,Round
-
+import json
 import datetime
 from datetime import timedelta
 # Create your views here.
@@ -128,6 +128,7 @@ def save_sale(request):
         id = request.POST.get('id', None)
         quantity = request.POST.get('quantity')
         price = request.POST.get('price')
+        amount_paid = request.POST.get('amount_paid',None)
         customer_id = request.POST.get('customer')
         record_date = request.POST.get('record_date')
         customer = Customer.objects.filter(id=customer_id).first()
@@ -150,8 +151,18 @@ def save_sale(request):
                 "price": price,
                 "customer":customer,
                 "record_date":datetime.datetime.strptime(record_date, '%d-%m-%Y'),
-                "added_by": User.objects.get(pk=1)
+                "added_by": request.user
             })
+
+            # Capture payments
+            if amount_paid  and float(amount_paid) > 0:
+                Sale.objects.create(**{
+                    "amount": float(amount_paid),
+                    "customer":customer,
+                    "record_date":datetime.datetime.strptime(record_date, '%d-%m-%Y'),
+                    "added_by": request.user
+                })
+
             return JsonResponse({'status': 'success'})
 
         return JsonResponse({'status': 'failed'})
@@ -289,8 +300,67 @@ def save_payment(request):
                 "amount": amount,
                 "customer":customer,
                 "record_date":datetime.datetime.strptime(record_date, '%d-%m-%Y'),
-                "added_by": User.objects.get(pk=1)
+                "added_by": request.user
             })
             return JsonResponse({'status': 'success'})
 
         return JsonResponse({'status': 'failed'})
+    
+
+@csrf_exempt
+@login_required
+def bulk_sales(request):
+    if request.method == 'GET':
+        template = request.GET.get('template')
+        
+        Json_data = [['Customer No','Customer Name','Quantity','Price','Record Date','Amount Paid']]
+        
+        if template == 'sales-payment':
+          Json_data = [['Customer No','Customer Name','Record Date','Amount Paid']]
+          
+        customers = Customer.objects.all()
+        if customers:
+            for customer in customers:
+                if template == 'sales-payment':
+                    Json_data.append([customer.customer_no,customer.name,"",""])
+                else:
+                    Json_data.append([customer.customer_no,customer.name,"","","",""])
+        
+        data = {
+            'Json_data': Json_data,
+            'status': 'success'
+        }
+        # suppliers.delete()
+        return JsonResponse(data)
+    
+    if request.method == 'POST':
+        stock_sales = request.POST.get('stock_sales')
+        stock_sales = json.loads(stock_sales)
+       
+        if stock_sales:
+            for stock_sale in stock_sales:
+                customer_no = stock_sale.get('Customer No',None)
+                quantity = stock_sale.get('Quantity',None)
+                price = stock_sale.get('Price',None)
+                record_date = stock_sale.get('Record Date',None)
+                amount_paid = stock_sale.get('Amount Paid',None)
+               
+                if customer_no and quantity and price and record_date:
+                    StockDelivered.objects.create(**{
+                        "quantity": quantity,
+                        "price": price,
+                        "customer":Customer.objects.filter(customer_no=customer_no).first(),
+                        "record_date":datetime.datetime.strptime(record_date, '%Y-%m-%d'),
+                        "added_by": request.user
+                    })
+                
+                if customer_no and record_date and amount_paid and float(amount_paid) > 0:
+                    Sale.objects.create(**{
+                        "amount": amount_paid,
+                        "customer":Customer.objects.filter(customer_no=customer_no).first(),
+                        "record_date":datetime.datetime.strptime(record_date, '%Y-%m-%d'),
+                        "added_by": request.user
+                    })
+            return JsonResponse({'status': 'success'}) 
+    
+    return JsonResponse({'status': 'failed'})

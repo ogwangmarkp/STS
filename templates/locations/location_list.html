@@ -1,0 +1,217 @@
+<div class="row mb-2">
+  <div class="col-sm-6">
+    <h4 class="m-0">Locations</h4>
+  </div>
+  <div class="col-sm-6">
+    <button id="new-location-modal-btn" onclick="openNewLocationModal()" type="button"
+      class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#new-location-modal">
+      New Location
+    </button>
+  </div>
+</div>
+<div class="modal fade" id="new-location-modal">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">New Location</h5>
+        <button type="button" onclick="resetNewlocationModal()" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-sm-12 col-md-12">
+            <label>Location Details</label>
+            <hr class="underliner"/>
+          </div>
+          <div class="col-sm-12 col-md-12">
+            <div class="form-group">
+              <label for="address">Address</label>
+              <input type="text" id="address" name="address" class='w-100'>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-primary float-right" onclick="saveLocation()">Save location
+          Details</button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+<div class="modal fade" id="edit-location-dialog">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Location</h5>
+        <button type="button" class="close" onclick="resetEditLocationModal()" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-primary float-right" onclick="updateLocation()">Update Location</button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+<div class="row">
+  <div class="col-12 col-sm-12">
+    <div class="card card-primary card-outline">
+      <div class="card-header p-0 border-bottom-0">
+
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-12 col-sm-12">
+            <table id="location-lists" class="table table-bordered table-hover">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Address</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for location in locations %}
+                <tr>
+                  <td>{{ forloop.counter}}</td>
+                  <td>{{ location.address}}</td>
+                  <td style="text-align: center; max-width: 25px;">
+                    <div class="btn-group" style="align-content: center;">
+                      <button type="button" onclick="openEditLocationModal('{{location.id}}')"
+                        class="btn btn-xs btn-primary">Edit location</button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+      <!-- /.card -->
+    </div>
+  </div>
+</div>
+<script>
+  $(function () {
+    $('#location-lists').DataTable({
+      "paging": true,
+      "lengthChange": false,
+      "searching": false,
+      "ordering": true,
+      "info": true,
+      "autoWidth": false,
+      "responsive": true,
+    });
+  });
+
+  function validateLocation() {
+    var isValid = true;
+    $(".field-error").remove();
+
+    if ($("#address").val().length < 1) {
+      errorMarker($("#address"));
+      isValid = false;
+    }
+    return isValid;
+  }
+
+  function validateEditlocation() {
+    var isValid = true;
+    $(".field-error").remove();
+
+    if ($("#edit-address").val().length < 1) {
+      errorMarker($("#edit-address"));
+      isValid = false;
+    }
+    return isValid;
+  }
+
+  function saveLocation() {
+    if (validateLocation()) {
+      $.ajax({
+        url: '/locations/save-location/',
+        type: 'POST',
+        data: {
+          "address": $("#address").val(),
+          'action': 'save'
+        },
+        success: function (data) {
+          $("#new-location-modal-btn").click();
+          setTimeout(() => {
+            loadData('/locations/location-list/', 'GET', '');
+          }, 500);
+        },
+        error: function (xhr, status, error) {
+          alert('Error loading data: ' + error);
+        }
+      });
+    }
+  }
+
+  function openNewLocationModal() {
+    $('.field-error').remove();
+    resetNewlocationModal();
+  }
+
+  function resetNewlocationModal() {
+    $(".field-error").remove();
+    $("#address").val("");
+  }
+
+
+  function openEditLocationModal(id) {
+    $('.field-error').remove();
+    $('.location-panel').html('');
+    $('#edit-location-dialog').modal('show');
+    $.ajax({
+      url: '/locations/new-location/',
+      type: 'GET',
+      data: {"action": 'edit','id':id},
+      success: function (data) {
+        $('#edit-location-dialog').find('.modal-body').html(data.html);
+      },
+      error: function (xhr, status, error) {
+        alert('Error loading data: ' + error);
+      }
+    });
+  }
+
+  function resetEditLocationModal() {
+    $(".field-error").remove();
+    $('#edit-location-dialog').find('.modal-body').html('');
+  }
+
+  function updateLocation() {
+    if (validateEditlocation()) {
+      $.ajax({
+        url: '/locations/save-location/',
+        type: 'POST',
+        data: {
+          "id":$("#edit-location-id").val(),
+          "address": $("#edit-address").val(),
+          'action': 'edit'
+        },
+        success: function (data) {
+          $('#edit-location-dialog').modal('hide');
+          setTimeout(() => {
+            loadData('/locations/location-list/', 'GET', '');
+          }, 500);
+        },
+        error: function (xhr, status, error) {
+          alert('Error loading data: ' + error);
+        }
+      });
+    }
+  }
+
+</script>

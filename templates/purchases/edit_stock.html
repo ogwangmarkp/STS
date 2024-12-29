@@ -39,9 +39,29 @@
 </div>
 <script>
   $(function () {
+
+    const quantity = $('#edit-quantity').val();
+    const price = $('#edit-price').val();
+
     $('#edit-record_date').datepicker({
       maxDate: new Date(),
       dateFormat: "dd-mm-yy"
+    });
+
+    if(quantity.length > 0 && price.length > 0){
+      $('#edit-total').val(Number(quantity) *Number(price))
+    }else{
+      $('#edit-total').val(0)
+    }
+
+    $('#edit-quantity, #edit-price').on('keyup', function () {
+        const quantity = $('#edit-quantity').val();
+        const price = $('#edit-price').val();
+        if(quantity.length > 0 && price.length > 0){
+          $('#edit-total').val(Number(quantity) *Number(price))
+        }else{
+          $('#edit-total').val(0)
+        }
     });
   });
 </script>

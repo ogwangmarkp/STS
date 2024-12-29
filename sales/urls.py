@@ -6,5 +6,6 @@ urlpatterns = [
     path('save-sale/', views.save_sale, name='save-sale'),
      path('payment-list/', views.payment_list, name='payment-list'),
     path('new-payment/', views.payment_form, name='new-payment'),
-    path('save-payment/', views.save_payment, name='save-payment')
+    path('save-payment/', views.save_payment, name='save-payment'),
+    path('bulk-sales/', views.bulk_sales, name='bulk-sales')
 ]

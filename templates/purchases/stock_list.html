@@ -7,6 +7,13 @@
       class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#new-stock-modal">
       New Stock
     </button>
+    <button id="downloadExcel" type="button" class="btn btn-sm btn-secondary float-right mr-2 ml-2">
+      Download Template
+    </button>
+    <button id="bulk-upload-modal-btn" onclick="openUploadModal()" type="button"
+      class="btn btn-sm btn-success float-right" data-toggle="modal" data-target="#bulk-upload-dialog">
+      Bulk Upload
+    </button>
   </div>
 </div>
 <div class="row mb-2">
@@ -67,6 +74,10 @@
           </div>
           <div class="col-sm-12 col-md-6">
             <div class="form-group">
+              <label for="amount_paid">Amount Paid</label>
+              <input type="text" id="amount_paid" name="amount_paid" class='w-100'>
+            </div>
+            <div class="form-group">
               <label for="record_date">Record Date</label>
               <input type="text" id="record_date" name="record_date" class='w-100'>
             </div>
@@ -111,6 +122,30 @@
   </div>
   <!-- /.modal-dialog -->
 </div>
+<div class="modal fade" id="bulk-upload-dialog">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Bulk Upload</h5>
+        <button type="button" class="close"  data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <h5>Upload Excel File</h5>
+        <input type="file" id="uploadExcel" accept=".xlsx, .xls">
+        <br />
+        <table id="jsonTable" class="table table-bordered table-hover"></table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-primary float-right" 
+        onclick="processUpload()">Process Upload</button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
 <div class="row">
   <div class="col-12 col-sm-12">
     <div class="card card-primary card-outline">
@@ -125,6 +160,7 @@
                 <tr>
                   <th>#</th>
                   <th>Supplier</th>
+                  <th>Address</th>
                   <th>Quantity</th>
                   <th>Price</th>
                   <th>Expense/Supply</th>
@@ -141,6 +177,7 @@
                 <tr>
                   <td>{{ forloop.counter}}</td>
                   <td>{{ stock.supplier.name}}</td>
+                  <td>{{ stock.supplier.address.address}}</td>
                   <td>{{ stock.quantity}}</td>
                   <td>{{ stock.price |intcomma }}</td>
                   <td>{{ stock.expense_at |intcomma }}</td>
@@ -167,17 +204,14 @@
   </div>
 </div>
 <script>
+  var xlsArrayData = []
   $(function () {
     $('#stock-lists').DataTable({
-      "paging": true,
-      "lengthChange": false,
-      "searching": false,
-      "ordering": true,
-      "info": true,
-      "autoWidth": false,
-      "responsive": true,
-      "buttons": ["csv", "excel", "print"]
+     "responsive": true, "lengthChange": false, "autoWidth": false,
+      "buttons": ["csv", "excel","print"]
     }).buttons().container().appendTo('#stock-lists_wrapper .col-md-6:eq(0)');
+
+
     //Date picker
     $('#record_date').datepicker({
       maxDate: new Date(),
@@ -191,7 +225,124 @@
       dateFormat: "dd-mm-yy"
     });
 
+    $('#quantity, #price').on('keyup', function () {
+      const quantity = $('#quantity').val();
+      const price = $('#price').val();
+      if (quantity.length > 0 && price.length > 0) {
+        $('#total').val(Number(quantity) * Number(price))
+      } else {
+        $('#total').val(0)
+      }
+    });
+
+    $('#downloadExcel').on('click', function () {
+      $.ajax({
+        url: '/purchases/bulk-stocking/',
+        type: 'GET',
+        data: { "template":"stock"},
+        success: function (responseData) {
+          const worksheet = XLSX.utils.aoa_to_sheet(responseData.Json_data);
+          // Create a new workbook and append the worksheet
+          const workbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+          // Generate Excel file and trigger download
+          XLSX.writeFile(workbook, "Stock Purchase Template.xlsx");
+        },
+        error: function (xhr, status, error) {
+          alert('Error loading data: ' + error);
+        }
+      });
+    });
+
+    document.getElementById('uploadExcel').addEventListener('change', function (event) {
+      const file = event.target.files[0]; // Get the selected file
+      if (file) {
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          const data = new Uint8Array(e.target.result); // Read file content as binary
+          const workbook = XLSX.read(data, { type: 'array' }); // Parse the Excel file
+
+          // Convert the first sheet to JSON (array of arrays)
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          xlsArrayData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          xlsArrayData = arrayToJSON(xlsArrayData);
+
+          // Format date fields
+          xlsArrayData = xlsArrayData.map(row => {
+            if (row["Record Date"]) {
+              const serializedDate = row["Record Date"];
+              const formattedDate = XLSX.SSF.format("yyyy-mm-dd", serializedDate);
+              row["Record Date"] = formattedDate; // Replace with formatted date
+            }
+            return row;
+          });
+          generateTable(xlsArrayData);
+        };
+
+        reader.readAsArrayBuffer(file); // Read the file
+      } else {
+        alert('Please select a valid Excel file.');
+      }
+    });
+
   });
+
+  // Convert array to JSON
+  function arrayToJSON(array) {
+    const keys = array[0]; // Extract the first row as keys
+    const result = array.slice(1).map(row => {
+      const obj = {};
+      row.forEach((value, index) => {
+        obj[keys[index]] = value; // Map keys to values
+      });
+      return obj;
+    });
+    return result;
+  }
+
+  // Function to generate HTML table
+  function generateTable(data) {
+    const table = document.getElementById('jsonTable');
+    $(table).html('');
+    // Create table header
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    const keys = Object.keys(data[0]);
+    keys.forEach(key => {
+      const th = document.createElement('th');
+      th.textContent = key;
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Create table body
+    const tbody = document.createElement('tbody');
+    data.forEach(item => {
+      const row = document.createElement('tr');
+      keys.forEach(key => {
+        const td = document.createElement('td');
+        td.textContent = item[key];
+        row.appendChild(td);
+      });
+      tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+    if (!$.fn.DataTable.isDataTable(table)) {
+      $(table).DataTable({
+        "paging": true,
+        "lengthChange": false,
+        "searching": false,
+        "ordering": true,
+        "info": true,
+        "autoWidth": false,
+        "responsive": true
+      });
+    }
+
+  }
 
   function filterReport() {
     $.ajax({
@@ -268,6 +419,7 @@
         data: {
           "quantity": $("#quantity").val(),
           "price": $("#price").val(),
+          "amount_paid": Number($("#amount_paid").val()) > 0 ? Number($("#amount_paid").val()) : 0,
           "supplier": $("#supplier").val(),
           "record_date": $("#record_date").val().trim(),
           'action': 'save'
@@ -288,6 +440,12 @@
   function openNewStockModal() {
     $('.field-error').remove();
     resetNewStockModal();
+  }
+
+  function openUploadModal() {
+    $('#uploadExcel').val('');
+    $('#jsonTable').html('');
+    xlsArrayData = [];
   }
 
   function resetNewStockModal() {
@@ -320,6 +478,7 @@
     $('#edit-stock-dialog').find('.modal-body').html('');
   }
 
+
   function updateStock() {
     if (validateEditStock()) {
       $.ajax({
@@ -344,6 +503,24 @@
         }
       });
     }
+  }
+
+
+  function processUpload() {
+    $.ajax({
+      url: '/purchases/bulk-stocking/',
+      type: 'POST',
+      data: {'stock_purchases':JSON.stringify(xlsArrayData)},
+      success: function (data) {
+        $("#bulk-upload-modal-btn").click();
+        setTimeout(() => {
+          filterReport();
+        }, 500);
+      },
+      error: function (xhr, status, error) {
+        alert('Error loading data: ' + error);
+      }
+    });
   }
 
 </script>
