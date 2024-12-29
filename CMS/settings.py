@@ -97,7 +97,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'meat',
-        'USER': 'postgres',
+        'USER': 'meat',
         'PASSWORD':'password',
         'HOST': '127.0.0.1',
         'PORT': '5432'
